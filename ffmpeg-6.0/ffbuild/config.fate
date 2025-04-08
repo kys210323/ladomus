@@ -1,0 +1,1 @@
+config:c:x86_64:generic:linux:gcc 11 (GCC):--prefix=/usr/local --enable-gpl --enable-nonfree --enable-libx264 --disable-debug --disable-doc --disable-asm --extra-cflags=-I/usr/local/include --extra-ldflags=-L/usr/local/lib
