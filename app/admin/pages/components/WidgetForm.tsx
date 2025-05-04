@@ -26,11 +26,15 @@
    } from "@heroicons/react/24/outline";
    
    /* ------------------------------------------------------------------ */
-   /* 타입 선언 보강 – setImage 체이닝 명령 TS 지원                       */
+   /* 타입 선언 보강 – Image.setImage, TailwindParagraph align 명령 등           */
    /* ------------------------------------------------------------------ */
+   // Image.setImage 체이닝 명령 TS 지원(오류: Property 'setImage' does not exist)
    declare module "@tiptap/core" {
      interface Commands<ReturnType> {
        image: {
+         /**
+          * Insert an <img> node
+          */
          setImage: (options: { src: string; alt?: string; title?: string }) => ReturnType;
        };
      }
@@ -58,7 +62,11 @@
      onCreated?: () => void;
    }
    
-   const fontOptions = ["Times New Roman", "Roboto, sans-serif", "Arial, sans-serif"] as const;
+   const fontOptions = [
+     "Times New Roman",
+     "Roboto, sans-serif",
+     "Arial, sans-serif",
+   ] as const;
    const sizeOptions = ["1rem", "1.2rem", "1.5rem", "2rem"] as const;
    const weightOptions = ["100", "300", "400", "500", "700", "900"] as const;
    const colorPalette = [
@@ -73,15 +81,21 @@
    /* =====================================================================
       메인 컴포넌트
    =====================================================================*/
-   export default function WidgetForm({ pageId, boardId, onCreated }: WidgetFormProps) {
+   export default function WidgetForm({
+     pageId,
+     boardId,
+     onCreated,
+   }: WidgetFormProps) {
      /* ---------------- 공통 State ---------------- */
      const [widgetType, setWidgetType] = useState<WidgetType>("header");
      const [sortOrder, setSortOrder] = useState(0);
      const [groupId, setGroupId] = useState(0);
    
      /* ---------------- 정렬 ---------------- */
-     const [textDAlign, setTextDAlign] = useState<"left" | "center" | "right">("left");
-     const [textMAlign, setTextMAlign] = useState<"left" | "center" | "right">("left");
+     const [textDAlign, setTextDAlign] =
+       useState<"left" | "center" | "right">("left");
+     const [textMAlign, setTextMAlign] =
+       useState<"left" | "center" | "right">("left");
    
      /* ---------------- dropdown ---------------- */
      const [showFontMenu, setShowFontMenu] = useState(false);
@@ -131,11 +145,15 @@
          TailwindMark,
          Image,
          ImageGroup,
-         ImageSelectionDecoration,
-         HighlightPlugin,
+         ImageSelectionDecoration, // ⭐ 다중 이미지 outline
+         HighlightPlugin, // ⭐ selection 하이라이트
        ],
        content: '<p class="text-left md:text-left"><br /></p>',
-       editorProps: { attributes: { class: "ProseMirror focus:outline-none w-full block" } },
+       editorProps: {
+         attributes: {
+           class: "ProseMirror focus:outline-none w-full block",
+         },
+       },
        immediatelyRender: false,
      });
    
@@ -153,7 +171,8 @@
      const toolbarRef = useRef<HTMLDivElement>(null);
      useEffect(() => {
        const handleDocClick = (e: MouseEvent) => {
-         if (toolbarRef.current && !toolbarRef.current.contains(e.target as Node)) closeAllMenus();
+         if (toolbarRef.current && !toolbarRef.current.contains(e.target as Node))
+           closeAllMenus();
        };
        document.addEventListener("mousedown", handleDocClick);
        return () => document.removeEventListener("mousedown", handleDocClick);
@@ -162,12 +181,18 @@
      /* =================================================================
         Tailwind helper 커맨드
      ================================================================= */
-     const setFont = (f: string) => editor?.chain().focus().setTailwindMark({ fontFamily: f }).run();
-     const setSize = (s: string) => editor?.chain().focus().setTailwindMark({ fontSize: s }).run();
-     const setWeight = (w: string) => editor?.chain().focus().setTailwindMark({ fontWeight: w }).run();
-     const setColor = (c: string) => editor?.chain().focus().setTailwindMark({ textColor: c }).run();
-     const setPcAlign = (pc: "left" | "center" | "right") => editor?.chain().focus().setPcAlign(pc).run();
-     const setMobAlign = (m: "left" | "center" | "right") => editor?.chain().focus().setMobileAlign(m).run();
+     const setFont = (f: string) =>
+       editor?.chain().focus().setTailwindMark({ fontFamily: f }).run();
+     const setSize = (s: string) =>
+       editor?.chain().focus().setTailwindMark({ fontSize: s }).run();
+     const setWeight = (w: string) =>
+       editor?.chain().focus().setTailwindMark({ fontWeight: w }).run();
+     const setColor = (c: string) =>
+       editor?.chain().focus().setTailwindMark({ textColor: c }).run();
+     const setPcAlign = (pc: "left" | "center" | "right") =>
+       editor?.chain().focus().setPcAlign(pc).run();
+     const setMobAlign = (m: "left" | "center" | "right") =>
+       editor?.chain().focus().setMobileAlign(m).run();
    
      /* =================================================================
         이미지 업로드 util – 응답 { urls:[…] } 처리
@@ -185,7 +210,7 @@
      const fileInputRef = useRef<HTMLInputElement>(null);
    
      /* =================================================================
-        외부 이미지 업로드 콜백
+        외부 이미지 업로드 콜백 – header/image/carousel/fadeCarousel 분기
      ================================================================= */
      function handleImageUploaded(urls: string[]) {
        if (!urls.length) return;
@@ -207,7 +232,7 @@
      }
    
      /* =================================================================
-        저장 로직
+        저장 로직 – 위젯 생성 → API 호출
      ================================================================= */
      async function handleCreate(e: React.FormEvent) {
        e.preventDefault();
@@ -294,11 +319,14 @@
      }
    
      /* =================================================================
-        프리뷰 helpers
+        프리뷰 helpers – header/carousel/fadeCarousel
      ================================================================= */
      const renderHeaderPreview = () =>
        bgImageUrl && (
-         <div className="mt-2" style={{ width: 300, height: 150, border: "1px solid #ccc" }}>
+         <div
+           className="mt-2"
+           style={{ width: 300, height: 150, border: "1px solid #ccc" }}
+         >
            <img src={bgImageUrl} alt="" className="w-full h-full object-cover" />
          </div>
        );
@@ -336,7 +364,9 @@
      ================================================================= */
      return (
        <div className="w-full min-h-screen p-6 bg-gray-50">
-         <h3 className="text-lg font-semibold text-center mb-4">위젯 생성 (Tailwind Tiptap)</h3>
+         <h3 className="text-lg font-semibold text-center mb-4">
+           위젯 생성 (Tailwind Tiptap)
+         </h3>
    
          <form
            onSubmit={handleCreate}
@@ -387,141 +417,232 @@
                  ref={toolbarRef}
                  className="flex flex-wrap items-center gap-2 p-2 bg-gray-100 rounded"
                >
-                 {/* 폰트 */}
-                 <Dropdown
-                   label="폰트"
-                   show={showFontMenu}
-                   setShow={setShowFontMenu}
-                   onOpen={closeAllMenus}
-                 >
-                   {fontOptions.map((f) => (
-                     <DropdownItem key={f} onClick={() => setFont(f)}>
-                       {f}
-                     </DropdownItem>
-                   ))}
-                 </Dropdown>
+                 {/* ---------- 폰트 ---------- */}
+                 <div className="relative">
+                   <button
+                     type="button"
+                     className="px-3 py-1 bg-white border rounded flex items-center cursor-pointer hover:bg-gray-50"
+                     onClick={() => {
+                       closeAllMenus();
+                       setShowFontMenu(true);
+                     }}
+                   >
+                     폰트 <ChevronDownIcon className="w-4 h-4 ml-1" />
+                   </button>
+                   {showFontMenu && (
+                     <div className="absolute z-10 bg-white border rounded mt-1 p-2">
+                       {fontOptions.map((f) => (
+                         <div
+                           key={f}
+                           className="px-2 py-1 hover:bg-gray-100 cursor-pointer"
+                           onClick={() => {
+                             setFont(f);
+                             closeAllMenus();
+                           }}
+                         >
+                           {f}
+                         </div>
+                       ))}
+                     </div>
+                   )}
+                 </div>
    
-                 {/* 글자 크기 */}
-                 <Dropdown
-                   label="글자 크기"
-                   show={showSizeMenu}
-                   setShow={setShowSizeMenu}
-                   onOpen={closeAllMenus}
-                 >
-                   {sizeOptions.map((s) => (
-                     <DropdownItem key={s} onClick={() => setSize(s)}>
-                       {s}
-                     </DropdownItem>
-                   ))}
-                 </Dropdown>
+                 {/* ---------- 글자 크기 ---------- */}
+                 <div className="relative">
+                   <button
+                     type="button"
+                     className="px-3 py-1 bg-white border rounded flex items-center cursor-pointer hover:bg-gray-50"
+                     onClick={() => {
+                       closeAllMenus();
+                       setShowSizeMenu(true);
+                     }}
+                   >
+                     글자 크기 <ChevronDownIcon className="w-4 h-4 ml-1" />
+                   </button>
+                   {showSizeMenu && (
+                     <div className="absolute z-10 bg-white border rounded mt-1 p-2">
+                       {sizeOptions.map((sz) => (
+                         <div
+                           key={sz}
+                           className="px-2 py-1 hover:bg-gray-100 cursor-pointer"
+                           onClick={() => {
+                             setSize(sz);
+                             closeAllMenus();
+                           }}
+                         >
+                           {sz}
+                         </div>
+                       ))}
+                     </div>
+                   )}
+                 </div>
    
-                 {/* 굵기 */}
-                 <Dropdown
-                   label="굵기"
-                   show={showWeightMenu}
-                   setShow={setShowWeightMenu}
-                   onOpen={closeAllMenus}
-                 >
-                   {weightOptions.map((w) => (
-                     <DropdownItem key={w} onClick={() => setWeight(w)}>
-                       {w}
-                     </DropdownItem>
-                   ))}
-                 </Dropdown>
+                 {/* ---------- 굵기 ---------- */}
+                 <div className="relative">
+                   <button
+                     type="button"
+                     className="px-3 py-1 bg-white border rounded flex items-center cursor-pointer hover:bg-gray-50"
+                     onClick={() => {
+                       closeAllMenus();
+                       setShowWeightMenu(true);
+                     }}
+                   >
+                     굵기 <ChevronDownIcon className="w-4 h-4 ml-1" />
+                   </button>
+                   {showWeightMenu && (
+                     <div className="absolute z-10 bg-white border rounded mt-1 p-2">
+                       {weightOptions.map((w) => (
+                         <div
+                           key={w}
+                           className="px-2 py-1 hover:bg-gray-100 cursor-pointer"
+                           onClick={() => {
+                             setWeight(w);
+                             closeAllMenus();
+                           }}
+                         >
+                           {w}
+                         </div>
+                       ))}
+                     </div>
+                   )}
+                 </div>
    
-                 {/* 색상 */}
-                 <Dropdown
-                   label="색상"
-                   show={showColorMenu}
-                   setShow={setShowColorMenu}
-                   onOpen={closeAllMenus}
-                 >
-                   <div className="flex flex-wrap gap-2 p-1">
-                     {colorPalette.map((c) => (
-                       <div
-                         key={c.value}
-                         className="w-6 h-6 rounded border cursor-pointer"
-                         style={{ backgroundColor: c.value }}
-                         onClick={() => setColor(c.value)}
-                       />
-                     ))}
-                   </div>
-                 </Dropdown>
+                 {/* ---------- 색상 ---------- */}
+                 <div className="relative">
+                   <button
+                     type="button"
+                     className="px-3 py-1 bg-white border rounded flex items-center cursor-pointer hover:bg-gray-50"
+                     onClick={() => {
+                       closeAllMenus();
+                       setShowColorMenu(true);
+                     }}
+                   >
+                     색상 <ChevronDownIcon className="w-4 h-4 ml-1" />
+                   </button>
+                   {showColorMenu && (
+                     <div className="absolute z-10 bg-white border rounded mt-1 p-2 flex flex-wrap gap-2">
+                       {colorPalette.map((c) => (
+                         <div
+                           key={c.label}
+                           className="w-6 h-6 border rounded cursor-pointer"
+                           style={{ backgroundColor: c.value }}
+                           title={c.label}
+                           onClick={() => {
+                             setColor(c.value);
+                             closeAllMenus();
+                           }}
+                         />
+                       ))}
+                     </div>
+                   )}
+                 </div>
    
-                 {/* PC 정렬 */}
-                 <Dropdown
-                   label="PC 정렬"
-                   show={showPCAlignMenu}
-                   setShow={setShowPCAlignMenu}
-                   onOpen={closeAllMenus}
-                 >
-                   {(["left", "center", "right"] as const).map((pos) => (
-                     <DropdownItem
-                       key={pos}
-                       icon={
-                         pos === "left"
-                           ? Bars3BottomLeftIcon
-                           : pos === "center"
-                           ? Bars3Icon
-                           : Bars3BottomRightIcon
-                       }
-                       onClick={() => {
-                         setTextDAlign(pos);
-                         setPcAlign(pos);
-                       }}
-                     >
-                       {pos}
-                     </DropdownItem>
-                   ))}
-                 </Dropdown>
+                 {/* ---------- PC 정렬 ---------- */}
+                 <div className="relative">
+                   <button
+                     type="button"
+                     className="px-3 py-1 bg-white border rounded flex items-center cursor-pointer hover:bg-gray-50"
+                     onClick={() => {
+                       closeAllMenus();
+                       setShowPCAlignMenu(true);
+                     }}
+                   >
+                     PC 정렬 <ChevronDownIcon className="w-4 h-4 ml-1" />
+                   </button>
+                   {showPCAlignMenu && (
+                     <div className="absolute z-10 bg-white border rounded mt-1 p-2">
+                       {(["left", "center", "right"] as const).map((pos) => (
+                         <div
+                           key={pos}
+                           className="px-2 py-1 hover:bg-gray-100 cursor-pointer flex items-center"
+                           onClick={() => {
+                             setTextDAlign(pos);
+                             setPcAlign(pos);
+                             closeAllMenus();
+                           }}
+                         >
+                           {pos === "left" && (
+                             <Bars3BottomLeftIcon className="w-4 h-4 mr-1" />
+                           )}
+                           {pos === "center" && (
+                             <Bars3Icon className="w-4 h-4 mr-1" />
+                           )}
+                           {pos === "right" && (
+                             <Bars3BottomRightIcon className="w-4 h-4 mr-1" />
+                           )}
+                           {pos}
+                         </div>
+                       ))}
+                     </div>
+                   )}
+                 </div>
    
-                 {/* MOBILE 정렬 */}
-                 <Dropdown
-                   label="MOBILE 정렬"
-                   show={showMobileAlignMenu}
-                   setShow={setShowMobileAlignMenu}
-                   onOpen={closeAllMenus}
-                 >
-                   {(["left", "center", "right"] as const).map((pos) => (
-                     <DropdownItem
-                       key={pos}
-                       icon={
-                         pos === "left"
-                           ? Bars3BottomLeftIcon
-                           : pos === "center"
-                           ? Bars3Icon
-                           : Bars3BottomRightIcon
-                       }
-                       onClick={() => {
-                         setTextMAlign(pos);
-                         setMobAlign(pos);
-                       }}
-                     >
-                       {pos}
-                     </DropdownItem>
-                   ))}
-                 </Dropdown>
+                 {/* ---------- MOBILE 정렬 ---------- */}
+                 <div className="relative">
+                   <button
+                     type="button"
+                     className="px-3 py-1 bg-white border rounded flex items-center cursor-pointer hover:bg-gray-50"
+                     onClick={() => {
+                       closeAllMenus();
+                       setShowMobileAlignMenu(true);
+                     }}
+                   >
+                     MOBILE 정렬 <ChevronDownIcon className="w-4 h-4 ml-1" />
+                   </button>
+                   {showMobileAlignMenu && (
+                     <div className="absolute z-10 bg-white border rounded mt-1 p-2">
+                       {(["left", "center", "right"] as const).map((pos) => (
+                         <div
+                           key={pos}
+                           className="px-2 py-1 hover:bg-gray-100 cursor-pointer flex items-center"
+                           onClick={() => {
+                             setTextMAlign(pos);
+                             setMobAlign(pos);
+                             closeAllMenus();
+                           }}
+                         >
+                           {pos === "left" && (
+                             <Bars3BottomLeftIcon className="w-4 h-4 mr-1" />
+                           )}
+                           {pos === "center" && (
+                             <Bars3Icon className="w-4 h-4 mr-1" />
+                           )}
+                           {pos === "right" && (
+                             <Bars3BottomRightIcon className="w-4 h-4 mr-1" />
+                           )}
+                           {pos}
+                         </div>
+                       ))}
+                     </div>
+                   )}
+                 </div>
    
-                 {/* 이미지 업로드 */}
+                 {/* ---------- 이미지 삽입 ---------- */}
                  <button
                    type="button"
-                   className="px-3 py-1 bg-white border rounded flex items-center hover:bg-gray-50"
-                   onClick={() => fileInputRef.current?.click()}
+                   className="px-3 py-1 bg-white border rounded flex items-center cursor-pointer hover:bg-gray-50"
+                   onClick={() => {
+                     closeAllMenus();
+                     fileInputRef.current?.click();
+                   }}
                  >
                    이미지 <PhotoIcon className="w-4 h-4 ml-1" />
                  </button>
    
-                 {/* 그룹 묶기 */}
+                 {/* ---------- 그룹으로 묶기 ---------- */}
                  <button
                    type="button"
-                   className="px-3 py-1 bg-white border rounded flex items-center hover:bg-gray-50"
-                   onClick={() => editor?.chain().focus().wrapImages().run()}
+                   className="px-3 py-1 bg-white border rounded flex items-center cursor-pointer hover:bg-gray-50"
+                   onClick={() => {
+                     closeAllMenus();
+                     editor?.chain().focus().wrapImages().run();
+                   }}
                  >
                    그룹으로 묶기
                  </button>
                </div>
    
-               {/* 파일 input */}
+               {/* 파일 input (툴바 밖) */}
                <input
                  type="file"
                  accept="image/*"
@@ -530,16 +651,26 @@
                  className="hidden"
                  onChange={async (e) => {
                    const files = Array.from(e.target.files ?? []);
-                   for (const f of files) {
-                     const url = await uploadFile(f);
-                     editor?.chain().focus().setImage({ src: url, alt: "" }).wrapImages().run();
+                   if (!files.length) return;
+                   for (const file of files) {
+                     const url = await uploadFile(file);
+                     editor
+                       ?.chain()
+                       .focus()
+                       .setImage({ src: url, alt: "" })
+                       .wrapImages() // ⭐ 업로드 즉시 이미지 그룹화 & 여분 <p> 제거
+                       .run();
                    }
+                   // reset <input>
                    e.target.value = "";
                  }}
                />
    
-               {/* 에디터 */}
-               <EditorContent editor={editor} className="ProseMirror border p-2 min-h-[120px]" />
+               {/* 에디터 본문 */}
+               <EditorContent
+                 editor={editor}
+                 className="ProseMirror border p-2 min-h-[120px]"
+               />
              </div>
            )}
    
@@ -551,65 +682,24 @@
                {renderHeaderPreview()}
              </div>
            )}
-           {widgetType === "image" && <div className="mt-2 space-y-2" />}
-           {widgetType === "carousel" && renderCarouselPreview()}
-           {widgetType === "fadeCarousel" && renderFadeCarouselPreview()}
-           {widgetType === "button" && <div className="mt-2 space-y-2" />}
    
-           <button type="submit" className="bg-blue-500 text-white py-1 px-3 rounded hover:bg-blue-600">
+           {widgetType === "image" && (
+             <div className="mt-2 space-y-2">{/* 이미지 옵션 */}</div>
+           )}
+           {widgetType === "carousel" && <div>{renderCarouselPreview()}</div>}
+           {widgetType === "fadeCarousel" && <div>{renderFadeCarouselPreview()}</div>}
+           {widgetType === "button" && (
+             <div className="mt-2 space-y-2">{/* 버튼 옵션 */}</div>
+           )}
+   
+           {/* 제출 */}
+           <button
+             type="submit"
+             className="bg-blue-500 text-white py-1 px-3 rounded hover:bg-blue-600"
+           >
              생성
            </button>
          </form>
        </div>
      );
    }
-   
-   /* =====================================================================
-      서브 컴포넌트: Dropdown & DropdownItem
-   =====================================================================*/
-   interface DropdownProps {
-     label: string;
-     show: boolean;
-     setShow: React.Dispatch<React.SetStateAction<boolean>>;
-     onOpen: () => void;
-     children: React.ReactNode;
-   }
-   function Dropdown({ label, show, setShow, onOpen, children }: DropdownProps) {
-     return (
-       <div className="relative">
-         <button
-           type="button"
-           className="px-3 py-1 bg-white border rounded flex items-center hover:bg-gray-50"
-           onClick={() => {
-             onOpen();
-             setShow(true);
-           }}
-         >
-           {label} <ChevronDownIcon className="w-4 h-4 ml-1" />
-         </button>
-         {show && (
-           <div className="absolute z-10 bg-white border rounded mt-1 p-2 shadow-sm">{children}</div>
-         )}
-       </div>
-     );
-   }
-   
-   interface DropdownItemProps {
-     icon?: React.ComponentType<{ className?: string }>;
-     onClick: () => void;
-     children: React.ReactNode;
-   }
-   function DropdownItem({ icon: Icon, onClick, children }: DropdownItemProps) {
-     return (
-       <div
-         className="px-2 py-1 hover:bg-gray-100 cursor-pointer flex items-center"
-         onClick={() => {
-           onClick();
-         }}
-       >
-         {Icon && <Icon className="w-4 h-4 mr-1" />}
-         {children}
-       </div>
-     );
-   }
-   
