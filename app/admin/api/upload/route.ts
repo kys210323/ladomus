@@ -1,60 +1,75 @@
-// my_site/app/admin/api/upload/route.ts
+import { NextResponse } from "next/server";
+import fs from "fs";
+import path from "path";
+import sharp from "sharp";
 
-import { NextRequest, NextResponse } from 'next/server';
-import { exec } from 'child_process';
-import path from 'path';
-import fs from 'fs';
-
-// 1) 파일 업로드 라이브러리로 formidable이나 busboy 같은 걸 쓸 수 있지만,
-//    Next.js 13의 app router는 아직 파일 폼 처리가 편리하지 않습니다.
-//    간단히 multipart/form-data를 수동 파싱하거나, "no parsing" 후 Node.js 방식으로 처리해야 합니다.
-
-//    여기서는 "이미 서버에 파일이 있다고 가정"하는 간단 예시를 보여드릴게요.
-//    실제로는 formdata를 받아서 /public/videos 폴더에 저장하는 코드가 필요합니다.
-//
-//    (참고: 만약 직접 구현이 복잡하면, "pages router"에 "formidable"을 쓰는 방법이 더 쉬울 수 있습니다.)
-
-export async function POST(req: NextRequest) {
+export async function POST(req: Request) {
   try {
-    // (A) 원래라면 여기서 req.formData() 등의 방식으로 받은 파일을 /public/videos에 저장
-    //     예: '/public/videos/video1234.mp4'
-    // 지금은 예시로 "이미 /public/videos/video1220.mp4가 올라와 있다고 가정"하겠습니다.
+    // 1) formData로 모든 'file' 필드 가져오기
+    const formData = await req.formData();
+    const allFiles = formData.getAll("file") as File[];
+    if (!allFiles || allFiles.length === 0) {
+      return NextResponse.json({ error: "No file uploaded" }, { status: 400 });
+    }
 
-    const uploadedFileName = 'video1220.mp4'; 
-    const uploadDir = path.join(process.cwd(), 'public', 'videos');
-    const uploadedFilePath = path.join(uploadDir, uploadedFileName);
+    // 업로드 결과 URL 리스트
+    const uploadedUrls: string[] = [];
 
-    // (B) 최적화 후 덮어쓸 건지, 새 파일로 만들 건지 결정
-    // 만약 "덮어쓰기"를 원하면, 출력 경로를 똑같이 해주면 됩니다.
-    // 여기서는 "덮어쓰기" 예시:
-    const outputPath = uploadedFilePath;
+    // 2) /public/uploads 폴더 생성(없으면)
+    const uploadDir = path.join(process.cwd(), "public", "uploads");
+    if (!fs.existsSync(uploadDir)) {
+      fs.mkdirSync(uploadDir, { recursive: true });
+    }
 
-    // (C) FFmpeg 명령어 예시 - mpeg4로 인코딩
-    //     화질 옵션은 생략(기본)
-    const ffmpegCmd = `ffmpeg -y -i "${uploadedFilePath}" -c:v mpeg4 "${outputPath}"`;
+    // 3) 각 파일 반복 처리
+    for (const file of allFiles) {
+      const originalName = file.name; // 예: "myphoto.png"
+      const ext = path.extname(originalName).toLowerCase();
 
-    console.log('[UPLOAD API] Running:', ffmpegCmd);
+      // 새 파일 확장자 & 버퍼
+      let newExt = ".jpg";
+      const buffer = Buffer.from(await file.arrayBuffer());
+      let optimizedBuffer: Buffer;
 
-    // (D) 실제 FFmpeg 실행
-    await new Promise<void>((resolve, reject) => {
-      exec(ffmpegCmd, (error, stdout, stderr) => {
-        if (error) {
-          console.error('FFmpeg error:', error);
-          return reject(error);
-        }
-        console.log('FFmpeg stdout:', stdout);
-        console.log('FFmpeg stderr:', stderr);
-        resolve();
-      });
-    });
+      if (ext === ".png" || ext === ".webp" || ext === ".gif") {
+        // 투명 유지: png() 변환
+        newExt = ".png";
+        optimizedBuffer = await sharp(buffer)
+          .resize({
+            width: 1280,
+            withoutEnlargement: true, // 원본보다 작으면 확대X
+          })
+          .png({ quality: 80 })
+          .toBuffer();
+      } else {
+        // 그 외 → jpeg 변환
+        newExt = ".jpg";
+        optimizedBuffer = await sharp(buffer)
+          .resize({
+            width: 1280,
+            withoutEnlargement: true, // 원본보다 작으면 확대X
+          })
+          .jpeg({ quality: 80 })
+          .toBuffer();
+      }
 
-    // (E) 작업 끝나면 응답
-    return NextResponse.json({
-      success: true,
-      message: 'File re-encoded and overwritten successfully.',
-    });
+      // 최종 파일명
+      const fileName = `${Date.now()}_${Math.random()
+        .toString(36)
+        .slice(2)}${newExt}`;
+      const savePath = path.join(uploadDir, fileName);
+
+      fs.writeFileSync(savePath, optimizedBuffer);
+
+      // 접근할 URL
+      const fileUrl = "/uploads/" + fileName;
+      uploadedUrls.push(fileUrl);
+    }
+
+    // 4) 업로드된 이미지 URL 배열 반환
+    return NextResponse.json({ urls: uploadedUrls });
   } catch (err: any) {
-    console.error(err);
-    return NextResponse.json({ success: false, error: err.message }, { status: 500 });
+    console.error("Upload error:", err);
+    return NextResponse.json({ error: err.message }, { status: 500 });
   }
 }

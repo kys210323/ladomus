@@ -1,31 +1,58 @@
-// app/templates/LandingTemplate.tsx
+// app/templates/BoardTemplate.tsx
 import React from "react";
 
-// 페이지 객체 구조에 맞춰 Props 정의 (예시)
-interface PageProps {
+interface BoardTemplateProps {
   page: {
     id: number;
     title: string;
+    slug: string;
+    template?: string;
     content: string;
-    // 필요한 필드 더 추가
   };
+  widgets: {
+    id: number;
+    widget_type: string;
+    data: any;
+    sort_order: number;
+  }[];
+  children?: React.ReactNode; // ★ 추가
 }
 
-// LandingTemplate: 예: 랜딩 페이지 스타일, 배경, Hero 섹션 등
-export default function LandingTemplate({ page }: PageProps) {
+export default function BoardTemplate({
+  page,
+  widgets,
+  children, // ★ 파라미터로 수신
+}: BoardTemplateProps) {
   return (
-    <div style={{ padding: "2rem", backgroundColor: "#eef" }}>
-      <h2 style={{ fontSize: "1.5rem", marginBottom: "1rem" }}>
-        (Landing Template) {page.title}
-      </h2>
-      <p>
-        여기에 랜딩페이지용 Hero 영역, 슬라이드, 버튼 등을 자유롭게 배치하세요.
-      </p>
-      {/* 내용 표시 (예: HTML) */}
-      <div
-        style={{ marginTop: "1rem" }}
-        dangerouslySetInnerHTML={{ __html: page.content }}
-      />
+    <div style={{ padding: "20px", border: "1px solid #ccc" }}>
+      <h1>{page.title}</h1>
+      <div style={{ marginBottom: "10px" }}>{page.content}</div>
+
+      {/* 위젯 목록 */}
+      {widgets.map((w) => {
+        if (w.widget_type === "image") {
+          return (
+            <div key={w.id} style={{ margin: "10px 0" }}>
+              <img
+                src={w.data?.src || ""}
+                alt={w.data?.alt || ""}
+                style={{ maxWidth: "100%" }}
+              />
+            </div>
+          );
+        }
+        // 기본 출력
+        return (
+          <div key={w.id} style={{ margin: "10px 0", color: "gray" }}>
+            위젯 타입: {w.widget_type}
+            <br />
+            {JSON.stringify(w.data)}
+          </div>
+        );
+      })}
+
+      {/* layout.tsx에서 넘긴 children (자식 라우트 등) */}
+      {children}
     </div>
   );
 }
