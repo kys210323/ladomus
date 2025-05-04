@@ -1,26 +1,19 @@
-import { cookies } from "next/headers";
+// app/(site)/layout.tsx
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
+import type { Metadata } from "next";
 
-export default async function SiteLayout({
-  children,
-}: {
-  children: React.ReactNode;
-}) {
-  // 쿠키로 로그인 여부 확인
-  const cookieStore = await cookies();
-  const userId = cookieStore.get("userId")?.value;
-  const isLoggedIn = !!userId;
+export const metadata: Metadata = {
+  title: "라도무스 아트센터",
+  description: "Just a next.js site for (site) route",
+};
 
+export default function SiteLayout({ children }: { children: React.ReactNode }) {
   return (
-    <div className="flex flex-col min-h-screen bg-gray-50">
+    <>
       <Header />
-
-      <main className="flex-1 w-full max-w-screen-xl mx-auto px-4 py-8">
-        {children}
-      </main>
-
-      <Footer isLoggedIn={isLoggedIn} />
-    </div>
+      <main>{children}</main>
+      <Footer />
+    </>
   );
 }

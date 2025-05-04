@@ -1,5 +1,8 @@
 {
   "compilerOptions": {
+    // ---------------------------------------------
+    // 기존 설정 그대로 복사
+    // ---------------------------------------------
     "target": "ES2017",
     "lib": ["dom", "dom.iterable", "esnext"],
     "allowJs": true,
@@ -22,6 +25,18 @@
       "@/*": ["./*"]
     }
   },
-  "include": ["next-env.d.ts", "**/*.ts", "**/*.tsx", ".next/types/**/*.ts"],
-  "exclude": ["node_modules"]
+  "include": [
+    // Next.js 기본 설정
+    "next-env.d.ts",
+    "**/*.ts",
+    "**/*.tsx",
+    ".next/types/**/*.ts"
+  ],
+  "exclude": [
+    "node_modules",
+    // ---------------------------------------------
+    // TinyMCE 언어 파일이 들어있는 폴더를 제외
+    // ---------------------------------------------
+    "public/tinymce"
+  ]
 }
